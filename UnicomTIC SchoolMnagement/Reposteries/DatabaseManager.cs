@@ -6,95 +6,115 @@ using System.Threading.Tasks;
 
 namespace UnicomTICManagementSystem.Repositories
 {
-    public class DatabaseManager
+    public static class DatabaseManager
     {
         private static readonly string connectionString = "Data Source=Unicom.db;Version=3;";
 
-        // Always return NEW connection instead of reusing static connection
+        // Always return NEW connection
         public static SQLiteConnection GetConnection()
         {
             return new SQLiteConnection(connectionString);
         }
 
+        // Create all tables in correct order
         public static void InitializeDatabase()
         {
             using (var connection = GetConnection())
             {
                 connection.Open();
+                using (var cmd = connection.CreateCommand())
+                {
+                    // 1. Users
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Users (
+                            UserID   INTEGER PRIMARY KEY AUTOINCREMENT,
+                            Username TEXT    NOT NULL UNIQUE,
+                            Password TEXT    NOT NULL,
+                            Role     TEXT    NOT NULL
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createUsersTable = @"CREATE TABLE IF NOT EXISTS Users (
-                    UserID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Username TEXT NOT NULL,
-                    Password TEXT NOT NULL,
-                    Role TEXT NOT NULL
-                );";
-                string createSubjectsTable = @"CREATE TABLE IF NOT EXISTS Courses (
-                    CourseId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    CourseName TEXT NOT NULL,
-                    Description TEXT,
-                    DurationMonths INTEGER
-                );";
+                    // Insert default admin & lecturer
+                    cmd.CommandText = @"
+                        INSERT OR IGNORE INTO Users (Username, Password, Role)
+                        VALUES 
+                            ('admin',    'admin123', 'Admin'),
+                            ('lecturer', 'lec123',   'Lecturer');";
+                    cmd.ExecuteNonQuery();
 
-                string createCoursesTable = @"CREATE TABLE IF NOT EXISTS Subjects (
-                    SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    SubjectName TEXT NOT NULL,
-                    CourseID INTEGER,
-                    FOREIGN KEY(CourseID) REFERENCES Courses(CourseID)
-                );";
+                    // 2. Courses
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Courses (
+                            CourseID       INTEGER PRIMARY KEY AUTOINCREMENT,
+                            CourseName     TEXT    NOT NULL,
+                            Description    TEXT,
+                            DurationMonths INTEGER
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createStudentsTable = @"CREATE TABLE IF NOT EXISTS Student (
-                    StudentID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Email TEXT NOT NULL,
-                    Gender TEXT NOT NULL,
-                    DOB TEXT NOT NULL,
-                    CourseID INTEGER,
-                    Phone INTEGER,
-                    FOREIGN KEY(CourseID) REFERENCES Courses(CourseID)
-                );";
+                    // 3. Subjects
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Subjects (
+                            SubjectID   INTEGER PRIMARY KEY AUTOINCREMENT,
+                            SubjectName TEXT    NOT NULL,
+                            CourseID    INTEGER,
+                            FOREIGN KEY(CourseID) REFERENCES Courses(CourseID)
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createExamsTable = @"CREATE TABLE IF NOT EXISTS Exams (
-                    ExamID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ExamName TEXT NOT NULL,
-                    SubjectID INTEGER,
-                    FOREIGN KEY(SubjectID) REFERENCES Subjects(SubjectID)
-                );";
+                    // 4. Students
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Students (
+                            StudentID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            Name      TEXT    NOT NULL,
+                            CourseID  INTEGER,
+                            FOREIGN KEY(CourseID) REFERENCES Courses(CourseID)
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createMarksTable = @"CREATE TABLE IF NOT EXISTS Marks (
-                    MarkID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    StudentID INTEGER,
-                    ExamID INTEGER,
-                    Score INTEGER,
-                    FOREIGN KEY(StudentID) REFERENCES Students(StudentID),
-                    FOREIGN KEY(ExamID) REFERENCES Exams(ExamID)
-                );";
+                    // 5. Exams
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Exams (
+                            ExamID    INTEGER PRIMARY KEY AUTOINCREMENT,
+                            ExamName  TEXT    NOT NULL,
+                            SubjectID INTEGER,
+                            FOREIGN KEY(SubjectID) REFERENCES Subjects(SubjectID)
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createRoomsTable = @"CREATE TABLE IF NOT EXISTS Rooms (
-                    RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    RoomName TEXT NOT NULL,
-                    RoomType TEXT NOT NULL
-                );";
+                    // 6. Marks
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Marks (
+                            MarkID    INTEGER PRIMARY KEY AUTOINCREMENT,
+                            StudentID INTEGER,
+                            ExamID    INTEGER,
+                            Score     INTEGER,
+                            FOREIGN KEY(StudentID) REFERENCES Students(StudentID),
+                            FOREIGN KEY(ExamID)    REFERENCES Exams(ExamID)
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                string createTimetablesTable = @"CREATE TABLE IF NOT EXISTS Timetables (
-                    TimetableID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    SubjectID INTEGER,
-                    TimeSlot TEXT NOT NULL,
-                    RoomID INTEGER,
-                    FOREIGN KEY(SubjectID) REFERENCES Subjects(SubjectID),
-                    FOREIGN KEY(RoomID) REFERENCES Rooms(RoomID)
-                );";
+                    // 7. Rooms
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Rooms (
+                            RoomID   INTEGER PRIMARY KEY AUTOINCREMENT,
+                            RoomName TEXT    NOT NULL,
+                            RoomType TEXT    NOT NULL
+                        );";
+                    cmd.ExecuteNonQuery();
 
-                // Execute all CREATE TABLE commands
-                SQLiteCommand cmd = connection.CreateCommand();
-                cmd.CommandText = createUsersTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createCoursesTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createSubjectsTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createStudentsTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createExamsTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createMarksTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createRoomsTable; cmd.ExecuteNonQuery();
-                cmd.CommandText = createTimetablesTable; cmd.ExecuteNonQuery();
-
+                    // 8. Timetables
+                    cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS Timetables (
+                            TimetableID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            SubjectID   INTEGER,
+                            TimeSlot    TEXT    NOT NULL,
+                            RoomID      INTEGER,
+                            FOREIGN KEY(SubjectID) REFERENCES Subjects(SubjectID),
+                            FOREIGN KEY(RoomID)    REFERENCES Rooms(RoomID)
+                        );";
+                    cmd.ExecuteNonQuery();
+                }
                 connection.Close();
             }
         }
@@ -107,59 +127,43 @@ namespace UnicomTICManagementSystem.Repositories
                 using (var cmd = new SQLiteCommand(query, connection))
                 {
                     if (parameters != null)
-                    {
                         cmd.Parameters.AddRange(parameters);
-                    }
                     cmd.ExecuteNonQuery();
                 }
-                connection.Close();
             }
         }
 
         public static DataTable ExecuteQuery(string query, params SQLiteParameter[] parameters)
         {
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             using (var connection = GetConnection())
             {
                 connection.Open();
                 using (var cmd = new SQLiteCommand(query, connection))
                 {
                     if (parameters != null)
-                    {
                         cmd.Parameters.AddRange(parameters);
-                    }
                     using (var reader = cmd.ExecuteReader())
-                    {
                         dt.Load(reader);
-                    }
                 }
-                connection.Close();
             }
             return dt;
         }
 
-        // ✅ Async method with Dictionary parameters
         internal static async Task<DataTable> ExecuteQueryAsync(string query, Dictionary<string, object> parameters)
         {
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             using (var connection = GetConnection())
             {
                 await connection.OpenAsync();
                 using (var cmd = new SQLiteCommand(query, connection))
                 {
                     if (parameters != null)
-                    {
-                        foreach (var param in parameters)
-                        {
-                            cmd.Parameters.AddWithValue(param.Key, param.Value);
-                        }
-                    }
+                        foreach (var p in parameters)
+                            cmd.Parameters.AddWithValue(p.Key, p.Value);
                     using (var reader = await cmd.ExecuteReaderAsync())
-                    {
                         dt.Load(reader);
-                    }
                 }
-                connection.Close();
             }
             return dt;
         }
@@ -172,34 +176,22 @@ namespace UnicomTICManagementSystem.Repositories
                 using (var cmd = new SQLiteCommand(query, connection))
                 {
                     if (parameters != null)
-                    {
-                        foreach (var param in parameters)
-                        {
-                            cmd.Parameters.AddWithValue(param.Key, param.Value);
-                        }
-                    }
-                    int result = await cmd.ExecuteNonQueryAsync();
-                    connection.Close();
-                    return result;
+                        foreach (var p in parameters)
+                            cmd.Parameters.AddWithValue(p.Key, p.Value);
+                    return await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
 
-        // ✅ Async method without parameters
         internal static async Task<DataTable> ExecuteQueryAsync(string query)
         {
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             using (var connection = GetConnection())
             {
                 await connection.OpenAsync();
                 using (var cmd = new SQLiteCommand(query, connection))
-                {
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        dt.Load(reader);
-                    }
-                }
-                connection.Close();
+                using (var reader = await cmd.ExecuteReaderAsync())
+                    dt.Load(reader);
             }
             return dt;
         }
