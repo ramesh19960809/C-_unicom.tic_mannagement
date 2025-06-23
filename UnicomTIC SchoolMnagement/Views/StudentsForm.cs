@@ -29,9 +29,16 @@ namespace UnicomTICManagementSystem.Views
 
         private void LoadStudentsToGrid()
         {
-            List<Student> students = _controller.GetAllStudents();
-            dgvStudents.DataSource = null;
-            dgvStudents.DataSource = students;
+            try
+            {
+                List<Student> students = _controller.GetAllStudents();
+                dgvStudents.DataSource = null;
+                dgvStudents.DataSource = students;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to load students: " + ex.Message);
+            }
         }
 
         private void ClearFields()
@@ -47,11 +54,25 @@ namespace UnicomTICManagementSystem.Views
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtStudentName.Text) || string.IsNullOrWhiteSpace(txtEmail.Text) ||
-                cmbGender.SelectedIndex == -1 || string.IsNullOrWhiteSpace(txtPhone.Text) ||
+            if (string.IsNullOrWhiteSpace(txtStudentName.Text) ||
+                string.IsNullOrWhiteSpace(txtEmail.Text) ||
+                cmbGender.SelectedIndex == -1 ||
+                string.IsNullOrWhiteSpace(txtPhone.Text) ||
                 string.IsNullOrWhiteSpace(txtCourseID.Text))
             {
                 MessageBox.Show("Fill all fields.");
+                return;
+            }
+
+            if (dtpDOB.Value > DateTime.Today)
+            {
+                MessageBox.Show("Date of Birth cannot be in the future.");
+                return;
+            }
+
+            if (!int.TryParse(txtCourseID.Text, out int courseId) || courseId == 0)
+            {
+                MessageBox.Show("Invalid Course ID.");
                 return;
             }
 
@@ -62,7 +83,7 @@ namespace UnicomTICManagementSystem.Views
                 Gender = cmbGender.SelectedItem.ToString(),
                 DOB = dtpDOB.Value,
                 Phone = txtPhone.Text.Trim(),
-                CourseId = int.TryParse(txtCourseID.Text, out int courseId) ? courseId : 0
+                CourseId = courseId
             };
 
             bool result = _controller.AddStudent(student);
@@ -86,6 +107,18 @@ namespace UnicomTICManagementSystem.Views
                 return;
             }
 
+            if (dtpDOB.Value > DateTime.Today)
+            {
+                MessageBox.Show("Date of Birth cannot be in the future.");
+                return;
+            }
+
+            if (!int.TryParse(txtCourseID.Text, out int courseId) || courseId == 0)
+            {
+                MessageBox.Show("Invalid Course ID.");
+                return;
+            }
+
             Student student = new Student
             {
                 StudentId = int.Parse(txtStudentID.Text),
@@ -94,7 +127,7 @@ namespace UnicomTICManagementSystem.Views
                 Gender = cmbGender.SelectedItem.ToString(),
                 DOB = dtpDOB.Value,
                 Phone = txtPhone.Text.Trim(),
-                CourseId = int.TryParse(txtCourseID.Text, out int courseId) ? courseId : 0
+                CourseId = courseId
             };
 
             bool result = _controller.UpdateStudent(student);
@@ -143,17 +176,17 @@ namespace UnicomTICManagementSystem.Views
 
         private void dgvStudents_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            if (e.RowIndex >= 0 && dgvStudents.Rows[e.RowIndex].Cells.Count >= 7)
             {
                 DataGridViewRow row = dgvStudents.Rows[e.RowIndex];
 
-                txtStudentID.Text = row.Cells["StudentId"].Value.ToString();
-                txtStudentName.Text = row.Cells["Name"].Value.ToString();
-                txtEmail.Text = row.Cells["Email"].Value.ToString();
-                cmbGender.SelectedItem = row.Cells["Gender"].Value.ToString();
-                dtpDOB.Value = Convert.ToDateTime(row.Cells["DOB"].Value);
-                txtPhone.Text = row.Cells["Phone"].Value.ToString();
-                txtCourseID.Text = row.Cells["CourseId"].Value.ToString();
+                txtStudentID.Text = row.Cells["StudentId"].Value?.ToString() ?? "";
+                txtStudentName.Text = row.Cells["Name"].Value?.ToString() ?? "";
+                txtEmail.Text = row.Cells["Email"].Value?.ToString() ?? "";
+                cmbGender.SelectedItem = row.Cells["Gender"].Value?.ToString() ?? "";
+                dtpDOB.Value = DateTime.TryParse(row.Cells["DOB"].Value?.ToString(), out DateTime dob) ? dob : DateTime.Today;
+                txtPhone.Text = row.Cells["Phone"].Value?.ToString() ?? "";
+                txtCourseID.Text = row.Cells["CourseId"].Value?.ToString() ?? "";
             }
         }
     }

@@ -1,7 +1,5 @@
-﻿using StudentManagementSystem;
-using System;
+﻿using System;
 using System.Windows.Forms;
-using UnicomTIC_SchoolMnagement.Views;
 using UnicomTICManagementSystem.Repositories;
 using UnicomTICManagementSystem.Views;
 
@@ -12,10 +10,12 @@ namespace UnicomTICManagementSystem
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            DatabaseManager.InitializeDatabase(); // Add this
-            Application.Run(new AdminDashboardForm()); // or your start form
+            ApplicationConfiguration.Initialize();
+
+            DatabaseManager.InitializeDatabase();
+
+            Application.Run(new LoginForm());
         }
+
     }
 }

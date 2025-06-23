@@ -9,6 +9,7 @@ namespace YourNamespace.Models
         public int ExamId { get; set; }
         public int Score { get; set; }
         public DateTime DateRecorded { get; set; }
+        public int SubjectId { get; internal set; }
 
         public Mark()
         {

@@ -12,29 +12,26 @@ namespace UnicomTICManagementSystem.Controllers
         // Get all Timetable records
         public List<TimeTable> GetAllTimetables()
         {
-            List<TimeTable> timetables = new List<TimeTable>();
+            var timetables = new List<TimeTable>();
 
             using (SQLiteConnection conn = Dbcon.GetConnection())
             {
                 conn.Open();
-                string query = @"SELECT TimetableID, CourseID, SubjectID, RoomID FROM Timetable";
+                string query = @"SELECT TimetableID, SubjectID, TimeSlot, RoomID FROM Timetables";
 
                 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
+                using (SQLiteDataReader reader = cmd.ExecuteReader())
                 {
-                    using (SQLiteDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
+                        var t = new TimeTable
                         {
-                            TimeTable t = new TimeTable
-                            {
-                                TimetableID = Convert.ToInt32(reader["TimetableID"]),
-                                CourseID = Convert.ToInt32(reader["CourseID"]),
-                                SubjectID = Convert.ToInt32(reader["SubjectID"]),
-                                RoomID = Convert.ToInt32(reader["RoomID"]),
-
-                            };
-                            timetables.Add(t);
-                        }
+                            TimetableID = Convert.ToInt32(reader["TimetableID"]),
+                            SubjectID = Convert.ToInt32(reader["SubjectID"]),
+                            TimeSlot = reader["TimeSlot"].ToString(),
+                            RoomID = Convert.ToInt32(reader["RoomID"])
+                        };
+                        timetables.Add(t);
                     }
                 }
             }
@@ -47,16 +44,14 @@ namespace UnicomTICManagementSystem.Controllers
             using (SQLiteConnection conn = Dbcon.GetConnection())
             {
                 conn.Open();
-                string query = @"INSERT INTO Timetable (CourseID, SubjectID, RoomID) 
-                 VALUES (@CourseID, @SubjectID, @RoomID)";
-
+                string query = @"INSERT INTO Timetables (SubjectID, TimeSlot, RoomID) 
+                                 VALUES (@SubjectID, @TimeSlot, @RoomID)";
 
                 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@CourseID", timetable.CourseID);
                     cmd.Parameters.AddWithValue("@SubjectID", timetable.SubjectID);
+                    cmd.Parameters.AddWithValue("@TimeSlot", timetable.TimeSlot);
                     cmd.Parameters.AddWithValue("@RoomID", timetable.RoomID);
-                    
 
                     int rows = cmd.ExecuteNonQuery();
                     return rows > 0;
@@ -70,15 +65,14 @@ namespace UnicomTICManagementSystem.Controllers
             using (SQLiteConnection conn = Dbcon.GetConnection())
             {
                 conn.Open();
-                string query = @"UPDATE Timetable 
-                 SET CourseID = @CourseID, SubjectID = @SubjectID, RoomID = @RoomID 
-                 WHERE TimetableID = @TimetableID";
-
+                string query = @"UPDATE Timetables 
+                                 SET SubjectID = @SubjectID, TimeSlot = @TimeSlot, RoomID = @RoomID 
+                                 WHERE TimetableID = @TimetableID";
 
                 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@CourseID", timetable.CourseID);
                     cmd.Parameters.AddWithValue("@SubjectID", timetable.SubjectID);
+                    cmd.Parameters.AddWithValue("@TimeSlot", timetable.TimeSlot);
                     cmd.Parameters.AddWithValue("@RoomID", timetable.RoomID);
                     cmd.Parameters.AddWithValue("@TimetableID", timetable.TimetableID);
 
@@ -94,7 +88,7 @@ namespace UnicomTICManagementSystem.Controllers
             using (SQLiteConnection conn = Dbcon.GetConnection())
             {
                 conn.Open();
-                string query = "DELETE FROM Timetable WHERE TimetableID = @TimetableID";
+                string query = "DELETE FROM Timetables WHERE TimetableID = @TimetableID";
 
                 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                 {
@@ -113,8 +107,7 @@ namespace UnicomTICManagementSystem.Controllers
             using (SQLiteConnection conn = Dbcon.GetConnection())
             {
                 conn.Open();
-                string query = "SELECT TimetableID, CourseID, SubjectID, RoomID FROM Timetable WHERE TimetableID = @TimetableID";
-
+                string query = "SELECT TimetableID, SubjectID, TimeSlot, RoomID FROM Timetables WHERE TimetableID = @TimetableID";
 
                 using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                 {
@@ -126,10 +119,9 @@ namespace UnicomTICManagementSystem.Controllers
                             timetable = new TimeTable
                             {
                                 TimetableID = Convert.ToInt32(reader["TimetableID"]),
-                                CourseID = Convert.ToInt32(reader["CourseID"]),
                                 SubjectID = Convert.ToInt32(reader["SubjectID"]),
-                                RoomID = Convert.ToInt32(reader["RoomID"]),
-                                
+                                TimeSlot = reader["TimeSlot"].ToString(),
+                                RoomID = Convert.ToInt32(reader["RoomID"])
                             };
                         }
                     }

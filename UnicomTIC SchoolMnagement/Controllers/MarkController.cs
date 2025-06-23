@@ -102,5 +102,25 @@ namespace YourNamespace.Controllers
             }
             return marks;
         }
+
+        internal bool UpdateMark(Mark mark)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal bool DeleteMark(int studentId, int subjectId)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal bool AddMark(Mark mark)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal List<Mark> GetAllMarks()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

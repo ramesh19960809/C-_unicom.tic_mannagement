@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data.SQLite;
 using System.Windows.Forms;
-using UnicomTIC_SchoolMnagement.Views; // ✅ Correct namespace for dashboard forms
+using UnicomTIC_SchoolMnagement.Views;
+using UnicomTICManagementSystem.Repositories; // For DatabaseManager
+using UnicomTICManagementSystem.Views;
 
 namespace UnicomTICManagementSystem
 {
@@ -14,7 +16,6 @@ namespace UnicomTICManagementSystem
 
         private void chkShowPassword_CheckedChanged(object sender, EventArgs e)
         {
-            // Show or hide password
             txtPassword.PasswordChar = chkShowPassword.Checked ? '\0' : '●';
         }
 
@@ -31,50 +32,48 @@ namespace UnicomTICManagementSystem
 
             try
             {
-                using (SQLiteConnection conn = new SQLiteConnection("Data Source=teachers.db;Version=3;"))
+                using (SQLiteConnection conn = new SQLiteConnection("Data Source=Unicom.db;Version=3;"))
                 {
                     conn.Open();
                     string query = "SELECT * FROM Users WHERE Username = @username AND Password = @password";
+
                     using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", username);
                         cmd.Parameters.AddWithValue("@password", password);
 
-                        SQLiteDataReader reader = cmd.ExecuteReader();
-                        if (reader.Read())
+                        using (SQLiteDataReader reader = cmd.ExecuteReader())
                         {
-                            MessageBox.Show("Login Successful!");
-
-                            string role = reader["Role"].ToString();
-
-                            if (role == "Admin")
+                            if (reader.Read())
                             {
-                                AdminDashboardForm adminForm = new AdminDashboardForm();
-                                adminForm.Show();
-                            }
-                            else if (role == "Lecturer")
-                            {
-                                LecturerDashboardForm lecturerForm = new LecturerDashboardForm();
-                                lecturerForm.Show();
+                                string role = reader["Role"].ToString();
+                                Form dashboardForm = null;
+
+                                if (role == "Admin")
+                                    dashboardForm = new AdminDashboardForm();
+                                else if (role == "Lecturer")
+                                    dashboardForm = new LecturerDashboardForm();
+                                else
+                                {
+                                    MessageBox.Show("Unauthorized user.");
+                                    return;
+                                }
+
+                                MessageBox.Show("Login successful.");
+                                dashboardForm.Show();
+                                this.Hide();
                             }
                             else
                             {
-                                MessageBox.Show("You are not authorized.");
-                                return;
+                                MessageBox.Show("Invalid username or password.");
                             }
-
-                            this.Hide(); // hide login form after successful login
-                        }
-                        else
-                        {
-                            MessageBox.Show("Invalid username or password.");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Login failed: " + ex.Message);
+                MessageBox.Show("Error occurred: " + ex.Message);
             }
         }
     }

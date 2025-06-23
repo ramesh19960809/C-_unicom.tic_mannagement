@@ -13,6 +13,6 @@ namespace UnicomTIC_SchoolMnagement.Models
         public int CourseID { get; set; }
         public int SubjectID { get; set; }
         public int RoomID { get; set; }
-        
+        public string? TimeSlot { get; internal set; }
     }
 }

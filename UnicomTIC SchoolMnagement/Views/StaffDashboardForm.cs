@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using UnicomTIC_SchoolMnagement.Views;
 
 namespace UnicomTICManagementSystem.Views
 {
@@ -24,18 +25,27 @@ namespace UnicomTICManagementSystem.Views
 
         private void btnManageCourses_Click(object sender, EventArgs e)
         {
+            CourseForm courseForm = new CourseForm();
+            courseForm.Show();
+            this.Hide();
             MessageBox.Show("Manage Courses clicked");
             // Open CourseForm logic here
         }
 
         private void btnManageSubjects_Click(object sender, EventArgs e)
         {
+            MarkForm markForm = new MarkForm();
+            markForm.Show();
+            this.Hide();
             MessageBox.Show("Manage Subjects clicked");
             // Open SubjectForm logic here
         }
 
         private void btnManageTimetables_Click(object sender, EventArgs e)
         {
+            TimetableForm timetableForm = new TimetableForm();
+            timetableForm.Show();
+            this.Hide();
             MessageBox.Show("Manage Timetables clicked");
             // Open TimetableForm logic here
         }
@@ -45,7 +55,9 @@ namespace UnicomTICManagementSystem.Views
             var result = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
-                this.Close(); // Or redirect to LoginForm
+                LoginForm loginForm = new LoginForm();
+                loginForm.Show();
+                this.Hide(); // Or redirect to LoginForm
             }
         }
     }
