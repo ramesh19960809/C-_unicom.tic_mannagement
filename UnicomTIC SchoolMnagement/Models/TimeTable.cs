@@ -10,9 +10,9 @@ namespace UnicomTIC_SchoolMnagement.Models
 
     {
         public int TimetableID { get; set; }
-        public int CourseID { get; set; }
         public int SubjectID { get; set; }
+        public string TimeSlot { get; set; }
         public int RoomID { get; set; }
-        public string? TimeSlot { get; internal set; }
+        public int CourseID { get; internal set; }
     }
 }
